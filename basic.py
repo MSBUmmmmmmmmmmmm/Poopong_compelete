@@ -249,9 +249,10 @@ def TruthTable(gate_class):
     test_gate = gate_class()
     length = len(test_gate.inpins)
     situations = pow(2, length)
-    receive = [Pin()]*length
-    for index in range(length):
-        test_gate.outpins[index].connet(receive[index])
+    receive = [Pin()]*len(test_gate.outpins)
+    print(receive)
+    for index in range(len(test_gate.outpins)):
+        test_gate.outpins[index].connect(receive[index])
     print(f"Table name:{gate_class}")
     for i in range(situations):
         changed = "0" * length + bin(i)[2:]
@@ -266,8 +267,9 @@ def TruthTable(gate_class):
 
 
 if __name__ == "__main__":
-    try:
-        while True:
+    while True:
+        print(">>>", end="")
+        try:
             exec(input())
-    except Exception as e:
-        print(e)
+        except Exception as e:
+            print(e)
