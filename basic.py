@@ -41,16 +41,23 @@ class Pin:
 
     def connect(self, obj):
         self.target.append(obj)
-        obj.last.append(self)
+        if isinstance(obj, Pin):
+            obj.last.append(self)
 
     def work(self):
         self.activity = True
         self.lock = False
+        """
         for obj in self.last:
             if not obj.activity:
                 self.lock = True
                 break
-        if not self.lock:
+        """
+        try:
+            for pin in self.last:
+                if not pin.activity:
+                    raise Inactivated()
+            self.lock = False
             for obj in self.target:
                 if isinstance(obj, Pin):
                     obj._value = self._value
@@ -58,6 +65,9 @@ class Pin:
                     obj.work()
                 except Inactivated:
                     pass
+        except Inactivated:
+            self.lock = True
+
 
     def write(self, val: int):
         self._value = val
@@ -68,7 +78,7 @@ class Pin:
     @staticmethod
     def reset():
         for pin in Pin.list_pins:
-            pin._value = 0
+            pin.write(0)
             pin.activity = False
             pin.lock = False
 
@@ -107,9 +117,10 @@ class Reg(Element):
         self._stored = 0
 
     def logic(self):
-        if self.inpins[1] == 1:
+        self.outpins[0].write(0)
+        if self.inpins[1].value == 1:
             self.outpins[0].write(self.read())
-        if self.inpins[2] == 1:
+        if self.inpins[2].value == 1:
             self.write(self.inpins[0].read())
 
     def write(self, val):
@@ -238,6 +249,9 @@ def TruthTable(gate_class):
     test_gate = gate_class()
     length = len(test_gate.inpins)
     situations = pow(2, length)
+    receive = [Pin()]*length
+    for index in range(length):
+        test_gate.outpins[index].connet(receive[index])
     print(f"Table name:{gate_class}")
     for i in range(situations):
         changed = "0" * length + bin(i)[2:]
@@ -246,7 +260,7 @@ def TruthTable(gate_class):
             test_gate.inpins[j].write(int(changed[j - length]))
             test_gate.inpins[j].work()
             input_values.append(test_gate.inpins[j].read())
-        out_values = [pin.read() for pin in test_gate.outpins]
+        out_values = [pin.read() for pin in receive]
         print(f"in:{input_values}, out:{out_values}")
     Pin.reset()
 
