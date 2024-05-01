@@ -6,7 +6,7 @@ class Signal(basic.Signal):
     def __init__(self, signal: tuple = None):
         if signal is None:
             signal = tuple([basic.Signal(0)] * 8)
-        self.sign = signal
+        self._sign_value = signal
 
 
 class Pin(basic.Pin):
@@ -21,6 +21,14 @@ class Pin(basic.Pin):
         super().__init__(sign, target, activity, lock, last)
         self._sign = sign
 
+    @staticmethod
+    def spawn(num: int = 0):  #用于生成引脚
+        list = []
+        for i in range(num):
+            pin = Pin()
+            list.append(pin)
+        return tuple(list)
+
 
 class Splitter(basic.Element):
 
@@ -30,7 +38,7 @@ class Splitter(basic.Element):
         super().__init__(inpins=in_pins, outpins=out_pins)
 
     def logic(self):
-        map(lambda x, y: x.write(y.read()), self.outpins, self.inpins._sign)
+        map(lambda x, y: x.write(y.read()), self.outpins, self.inpins[0]._sign)
 
 
 if __name__ == "__main__":
