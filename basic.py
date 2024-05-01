@@ -46,6 +46,10 @@ class Pin:
             target = []
         if last is None:
             last = []
+        if not isinstance(sign, Signal):
+            raise TypeError
+        if isinstance(sign.sign, tuple):
+            sign = sign.sign[0]
         self._sign = sign
         self.activity = activity
         self.target = target
@@ -61,12 +65,6 @@ class Pin:
     def work(self):
         self.activity = True
         self.lock = False
-        """
-        for obj in self.last:
-            if not obj.activity:
-                self.lock = True
-                break
-        """
         try:
             for pin in self.last:
                 if not pin.activity:
