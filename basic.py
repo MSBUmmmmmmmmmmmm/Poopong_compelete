@@ -1,10 +1,20 @@
 # Element的logic方法暂时只有几个低级原件在用，以后可能有别的用处
 class Inactivated(Exception):
+
     def __init__(self):
         super().__init__()
 
 
+class Signal:
+
+    def __init__(self, value: int = 0):
+        if value != 0 and value != 1:
+            raise ValueError
+        self.sign = value
+
+
 class Timer:
+
     def __init__(self, start: int = 0, step: int = 1):
         self.start = start
         self.step = step
@@ -26,13 +36,17 @@ class Timer:
 class Pin:
     list_pins = []
 
-    def __init__(self, value: int = 0, target: list = None,
-                 activity: bool = False, lock: bool = False, last: list = None):
+    def __init__(self,
+                 sign: Signal = Signal(0),
+                 target: list = None,
+                 activity: bool = False,
+                 lock: bool = False,
+                 last: list = None):
         if target is None:
             target = []
         if last is None:
             last = []
-        self._value = value
+        self._sign = sign
         self.activity = activity
         self.target = target
         self.last = last
@@ -60,7 +74,7 @@ class Pin:
             self.lock = False
             for obj in self.target:
                 if isinstance(obj, Pin):
-                    obj._value = self._value
+                    obj._sign = self._sign
                 try:
                     obj.work()
                 except Inactivated:
@@ -68,22 +82,22 @@ class Pin:
         except Inactivated:
             self.lock = True
 
-
-    def write(self, val: int):
-        self._value = val
+    def write(self, sign: Signal):
+        self._sign = sign
 
     def read(self):
-        return self._value
+        return self._sign
 
     @staticmethod
     def reset():
         for pin in Pin.list_pins:
-            pin.write(0)
+            pin.write(Signal(0))
             pin.activity = False
             pin.lock = False
 
 
 class Element:
+
     def __init__(self, inpins: tuple = None, outpins: tuple = None):
         if inpins is None:
             inpins = ()
@@ -112,19 +126,21 @@ class Element:
 
 # Reg 中的inpins依次为写入，是否读，是否写
 class Reg(Element):
+
     def __init__(self):
-        super().__init__(inpins=tuple([Pin(), Pin(), Pin()]), outpins=tuple([Pin()]))
-        self._stored = 0
+        super().__init__(inpins=tuple([Pin(), Pin(), Pin()]),
+                         outpins=tuple([Pin()]))
+        self._stored = Signal(0)
 
     def logic(self):
-        self.outpins[0].write(0)
-        if self.inpins[1].value == 1:
+        self.outpins[0].write(Signal(0))
+        if self.inpins[1]._sign == Signal(1):
             self.outpins[0].write(self.read())
-        if self.inpins[2].value == 1:
+        if self.inpins[2]._sign == Signal(1):
             self.write(self.inpins[0].read())
 
-    def write(self, val):
-        self._stored = val
+    def write(self, sign: Signal):
+        self._stored = sign
 
     def read(self):
         return self._stored
@@ -138,9 +154,9 @@ class Not(Element):
         super().__init__(inpins=in_pins, outpins=out_pins)
 
     def logic(self):
-        self.outpins[0].write(0)
-        if self.inpins[0].read() == 0:
-            self.outpins[0].write(1)
+        self.outpins[0].write(Signal(0))
+        if self.inpins[0].read() == Signal(0):
+            self.outpins[0].write(Signal(1))
 
 
 class And(Element):
@@ -151,10 +167,10 @@ class And(Element):
         super().__init__(inpins=in_pins, outpins=out_pins)
 
     def logic(self):
-        self.outpins[0].write(0)
-        if self.inpins[0].read() == 1:
-            if self.inpins[1].read() == 1:
-                self.outpins[0].write(1)
+        self.outpins[0].write(Signal(0))
+        if self.inpins[0].read() == Signal(1):
+            if self.inpins[1].read() == Signal(1):
+                self.outpins[0].write(Signal(1))
 
 
 class Nand(Element):
@@ -194,6 +210,7 @@ class Or(Element):
 
 
 class Nor(Element):
+
     def __init__(self):
         gate_or = Or()
         gate_not = Not()
@@ -249,7 +266,7 @@ def TruthTable(gate_class):
     test_gate = gate_class()
     length = len(test_gate.inpins)
     situations = pow(2, length)
-    receive = [Pin()]*len(test_gate.outpins)
+    receive = [Pin()] * len(test_gate.outpins)
     print(receive)
     for index in range(len(test_gate.outpins)):
         test_gate.outpins[index].connect(receive[index])
@@ -261,7 +278,7 @@ def TruthTable(gate_class):
             test_gate.inpins[j].write(int(changed[j - length]))
             test_gate.inpins[j].work()
             input_values.append(test_gate.inpins[j].read())
-        out_values = [pin.read() for pin in receive]
+        out_values = [pin.read().sign for pin in receive]
         print(f"in:{input_values}, out:{out_values}")
     Pin.reset()
 
