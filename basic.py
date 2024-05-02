@@ -347,7 +347,7 @@ def TruthTable(gate_class, debug=False):
         # print(test_gate.outpins[0].read().read())
         out_values = [pin.read().read() for pin in receive]
         print(f"in:{input_values}, out:{out_values}")
-    Pin.reset()
+        Pin.reset()
 
 
 if __name__ == "__main__":
