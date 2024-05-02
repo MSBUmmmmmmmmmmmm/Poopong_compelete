@@ -136,10 +136,12 @@ class Element:
                 if not pin.activity:
                     raise Inactivated()
             self.logic()
+            if self.debug:
+                print(
+                    f"obj:{self}, in:{self.debug_in()}, out:{self.debug_out()}"
+                )
             for pin in self.outpins:
                 pin.work()
-            if self.debug:
-                print(f"obj:{self}, out:{self.debug_out()}")
         except Inactivated:
             pass
 
@@ -149,6 +151,9 @@ class Element:
 
     def debug_out(self):
         return [i.read().read() for i in self.outpins]
+
+    def debug_in(self):
+        return [i.read().read() for i in self.inpins]
 
 
 # Reg 中的inpins依次为写入，是否读，是否写
@@ -329,8 +334,8 @@ def TruthTable(gate_class, debug=False):
     test_gate.debug = debug
     length = len(test_gate.inpins)
     situations = pow(2, length)
-    receive = [Pin()] * len(test_gate.outpins)
-    print(receive)
+    receive = Pin.spawn(len(test_gate.outpins))
+    print(f"receivers:{receive}")
     for index in range(len(test_gate.outpins)):
         test_gate.outpins[index].connect(receive[index])
     # print([i.target for i in test_gate.outpins])
