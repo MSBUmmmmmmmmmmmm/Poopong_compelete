@@ -142,6 +142,8 @@ class Element:
                 )
             for pin in self.outpins:
                 pin.work()
+            if self.debug:
+                print(f"obj:{self}, out:{self.debug_out()}")
         except Inactivated:
             pass
 
