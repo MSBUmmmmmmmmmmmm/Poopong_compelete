@@ -23,6 +23,14 @@ class Signal:
     def read(self):
         return self._sign_value
 
+    @staticmethod
+    def spawn(num: int = 0):
+        list = []
+        for i in range(num):
+            sign = Signal(0)
+            list.append(sign)
+        return tuple(list)
+
 
 class Timer:
 
@@ -156,6 +164,14 @@ class Element:
 
     def debug_in(self):
         return [i.read().read() for i in self.inpins]
+
+    @staticmethod
+    def spawn(Ele_class, value: int):
+        spawned = []
+        for i in range(value):
+            new_Ele = Ele_class()
+            spawned.append(new_Ele)
+        return spawned
 
 
 # Reg 中的inpins依次为写入，是否读，是否写
